@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.id.IdentifierGenerationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,7 +48,7 @@ public class TinyUrlInfoServicesImpl implements TinyUrlInfoServices {
 	}
 
 	@Override
-	public TinyUrlResponse saveOrUpdate(NewTinyUrlRequest saveInfo) {
+	public TinyUrlResponse saveOrUpdate(NewTinyUrlRequest saveInfo){
 		TinyUrlKeyInfo saveTinyurlObject = new TinyUrlKeyInfo();
 
 		TinyUrlResponse response = new TinyUrlResponse();
@@ -87,8 +88,14 @@ public class TinyUrlInfoServicesImpl implements TinyUrlInfoServices {
 		response.setActive(saveTinyurlObject.isActive());
 		response.setTinyUrlId(saveTinyurlObject.getTinyUrlId());
 
-		if (saveTinyurlObject != null)
-			tinyUrlRepository.save(saveTinyurlObject);
+		if (saveTinyurlObject != null) {
+			try {
+				tinyUrlRepository.save(saveTinyurlObject);
+			} catch (IdentifierGenerationException ex) {
+				logger.error("Error in the Tiny URL Repository : " + ex.getLocalizedMessage());
+				throw new ResponseStatusException(HttpStatus.IM_USED, ex.getLocalizedMessage());
+			}
+		}
 		// returning the user with the new tinyurl information.
 		return response;
 	}

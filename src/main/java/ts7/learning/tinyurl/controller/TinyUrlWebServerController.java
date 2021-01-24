@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
 
 import ts7.learning.tinyurl.model.NewTinyUrlRequest;
 import ts7.learning.tinyurl.model.NewTinyUrlResponse;
@@ -54,6 +55,7 @@ public class TinyUrlWebServerController {
 	 * 
 	 * @param request
 	 * @return
+	 * @throws NoURLAvailableErrorException
 	 */
 	@RequestMapping(value = "/createurlkey", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
 	public @ResponseBody NewTinyUrlResponse createURL(@RequestBody NewTinyUrlRequest request) {
@@ -63,7 +65,13 @@ public class TinyUrlWebServerController {
 
 		// I will check if the alias is present or not and then update the database
 		// accordingly in the below method.
-		TinyUrlResponse tinyUrlResponseObject = tinyUrlServices.saveOrUpdate(request);
+		TinyUrlResponse tinyUrlResponseObject = null;
+		try {
+			tinyUrlResponseObject = tinyUrlServices.saveOrUpdate(request);
+		} catch (Exception ex) {
+			logger.error("createURL controller " + ex.getLocalizedMessage());
+			throw new ResponseStatusException(HttpStatus.IM_USED, ex.getLocalizedMessage());
+		}
 		logger.info("tinyUrlResponseObject " + tinyUrlResponseObject);
 		request.setTinyUrl(tinyUrlResponseObject.getTinyUrlId());
 		// Once the database is updated then i will move the active keys to the Redis
@@ -77,7 +85,7 @@ public class TinyUrlWebServerController {
 			response.setStatus(HttpStatus.NO_CONTENT.value());
 		}
 		long endTime = startTime - System.currentTimeMillis() / 1000;
-		response.setHeader("TimeTakenByWebServer(seconds)", endTime + "");
+		// response.setHeader("TimeTakenByWebServer(seconds)", endTime + "");
 		return redisPostResponse;
 	}
 

@@ -46,7 +46,7 @@ public class KeyGenerationStartupLoadListener implements ApplicationRunner {
 		startTime = System.currentTimeMillis();
 		writeToRedisCache();
 		endTime = (System.currentTimeMillis() - startTime) / 1000;
-		logger.info("Time taken to load in Redis Server: " + endTime + " seconds ");
+		logger.info("Time taken to load in MariaDB Server: " + endTime + " seconds ");
 	}
 
 	public void writeToRedisCache() throws InterruptedException, IOException {
